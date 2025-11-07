@@ -1,10 +1,10 @@
 import numpy as np
 import os
 from sklearn.model_selection import train_test_split
-from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import LSTM, Dense
-from tensorflow.keras.callbacks import TensorBoard
+from keras.utils import to_categorical
+from keras.models import Sequential
+from keras.layers import LSTM, Dense
+from keras.callbacks import TensorBoard
 
 # Directorio de datos
 DATA_DIR = 'data'

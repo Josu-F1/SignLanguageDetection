@@ -5,7 +5,7 @@ import os
 import json
 import pyttsx3
 import time
-from tensorflow.keras.models import load_model
+from keras.models import load_model
 from collections import deque
 
 # === CONFIGURACIÓN ===
