@@ -82,3 +82,16 @@ model.fit(X_train, y_train, epochs=50, batch_size=32, validation_data=(X_test, y
 # Guardar el modelo
 model.save('sign_language_model.keras')
 print("Modelo guardado como 'sign_language_model.keras'")
+
+# Guardar las etiquetas de las señas en formato JSON
+import json
+signs_dict = {}
+for idx, sign in enumerate(signs):
+    signs_dict[str(idx)] = sign
+
+with open('signs.json', 'w', encoding='utf-8') as f:
+    json.dump(signs_dict, f, indent=2, ensure_ascii=False)
+
+print("Archivo 'signs.json' actualizado con las señas:")
+for idx, sign in enumerate(signs):
+    print(f"  {idx}: {sign}")
