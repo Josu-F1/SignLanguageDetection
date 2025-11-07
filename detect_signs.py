@@ -17,6 +17,16 @@ REPEAT_INTERVAL = 1.0  # segundos entre repeticiones de la misma palabra
 # === CARGAR MODELO Y SEÑAS ===
 model = load_model('sign_language_model.keras')
 
+# Información del modelo
+print("Modelo cargado exitosamente")
+try:
+    # Crear un input de prueba para obtener la forma de salida
+    test_input = np.zeros((1, SEQ_LEN, FEATURES))
+    test_output = model.predict(test_input, verbose=0)
+    print(f"Número de clases del modelo: {test_output.shape[-1]}")
+except Exception as e:
+    print(f"No se pudo determinar el número de clases: {e}")
+
 if os.path.exists('signs.json'):
     with open('signs.json', 'r', encoding='utf-8') as f:
         signs = json.load(f)
@@ -25,6 +35,7 @@ else:
 
 sign_labels = [signs[k] for k in sorted(signs.keys(), key=lambda x: int(x))]
 print("Señas disponibles:", sign_labels)
+print(f"Número de señas en signs.json: {len(sign_labels)}")
 
 # === CONFIGURAR MEDIAPIPE ===
 mp_hands = mp.solutions.hands
@@ -91,11 +102,17 @@ while cap.isOpened():
         X = np.expand_dims(np.array(sequence), axis=0)  # (1,30,63)
         prediction = model.predict(X, verbose=0)
         idx = np.argmax(prediction)
-        sign = sign_labels[idx]
-        confidence = prediction[0][idx]
-
-        cv2.putText(frame, f'Seña: {sign}', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
-        cv2.putText(frame, f'Confianza: {confidence:.2f}', (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,0), 2)
+        
+        # Validar que el índice esté dentro del rango válido
+        if idx < len(sign_labels):
+            sign = sign_labels[idx]
+            confidence = prediction[0][idx]
+            
+            cv2.putText(frame, f'Seña: {sign}', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+            cv2.putText(frame, f'Confianza: {confidence:.2f}', (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,0), 2)
+        else:
+            cv2.putText(frame, f'Error: Índice inválido {idx}', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+            print(f"Error: El modelo predijo el índice {idx} pero solo hay {len(sign_labels)} señas")
 
         current_time = time.time()
         if confidence > CONFIDENCE_THRESHOLD:
