@@ -1,0 +1,50 @@
+{
+  "backup_date": "2025-11-07T19:12:07.481100",
+  "items_backed_up": [
+    "data/",
+    "sign_language_model.keras",
+    "signs.json",
+    "training_stats.json",
+    "detect_signs.py",
+    "train_model.py",
+    "collect_data.py",
+    "voice_system.py",
+    "logs/"
+  ],
+  "model_exists": true,
+  "data_folders": [
+    {
+      "sign": "adios",
+      "sequences": 30
+    },
+    {
+      "sign": "como",
+      "sequences": 30
+    },
+    {
+      "sign": "como_estas",
+      "sequences": 30
+    },
+    {
+      "sign": "cuanto",
+      "sequences": 30
+    },
+    {
+      "sign": "hola",
+      "sequences": 30
+    },
+    {
+      "sign": "hola2",
+      "sequences": 40
+    },
+    {
+      "sign": "mal",
+      "sequences": 30
+    },
+    {
+      "sign": "sientes",
+      "sequences": 30
+    }
+  ],
+  "total_sequences": 250
+}

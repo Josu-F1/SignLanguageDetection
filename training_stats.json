@@ -1,0 +1,23 @@
+{
+  "num_classes": 9,
+  "total_sequences": 278,
+  "test_accuracy": 1.0,
+  "test_loss": 2.6086565412697382e-05,
+  "signs": {
+    "0": "adios",
+    "1": "como",
+    "2": "como_estas",
+    "3": "cuanto",
+    "4": "hola",
+    "5": "hola2",
+    "6": "mal",
+    "7": "no",
+    "8": "sientes"
+  },
+  "model_params": {
+    "target_frames": 30,
+    "n_features": 63,
+    "epochs_trained": 100,
+    "batch_size": 16
+  }
+}
