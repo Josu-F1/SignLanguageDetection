@@ -11,7 +11,7 @@ from voice_system import VoiceSystem
 # === CONFIGURACION MEJORADA - ALTA PRECISION ===
 SEQ_LEN = 30
 FEATURES = 63  # Mantenemos 63 para compatibilidad con el modelo actual
-CONFIDENCE_THRESHOLD = 0.75  # 75% para mayor precisión
+CONFIDENCE_THRESHOLD = 0.65  # 65% para facilitar detección
 REPEAT_INTERVAL = 6.0  # Más tiempo para evitar repeticiones
 MIN_STABLE_FRAMES = 15  # Más frames para mayor estabilidad
 PROCESSING_COOLDOWN = 3.0  # Tiempo de espera entre detecciones (segundos)
@@ -264,7 +264,7 @@ while cap.isOpened():
                     print(f"[DETECCION] {detected_sign} - Confianza: {confidence_level:.2f}, Estable: {stable_count}/{MIN_STABLE_FRAMES}, Tiempo: {time_passed:.1f}s")
                 
                 # Usar el sistema de voz SOLO con alta precisión y estabilidad
-                if stable_count >= MIN_STABLE_FRAMES and confidence_level > 0.75:  # 75% - ALTA PRECISIÓN
+                if stable_count >= MIN_STABLE_FRAMES and confidence_level > 0.66:  # 66% - ALTA PRECISIÓN
                     # El sistema de voz decide si debe hablar o no
                     if voice_system.speak_if_ready(detected_sign, min_interval=6, async_mode=False):  # Síncrono para mejor control
                         print(f"[DETECTADO] {detected_sign} (confianza: {confidence_level:.2f}, estabilidad: {stable_count})")

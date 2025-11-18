@@ -1,24 +1,17 @@
 {
-  "num_classes": 10,
-  "total_sequences": 318,
-  "test_accuracy": 0.78125,
-  "test_loss": 0.8275424242019653,
+  "num_classes": 3,
+  "total_sequences": 120,
+  "test_accuracy": 1.0,
+  "test_loss": 2.583032619440928e-05,
   "signs": {
-    "0": "adios",
-    "1": "como",
-    "2": "como_estas",
-    "3": "cuanto",
-    "4": "hola",
-    "5": "hola2",
-    "6": "hola3",
-    "7": "mal",
-    "8": "no",
-    "9": "sientes"
+    "0": "bien_hecho",
+    "1": "como_estas",
+    "2": "hola"
   },
   "model_params": {
     "target_frames": 30,
     "n_features": 63,
-    "epochs_trained": 45,
+    "epochs_trained": 74,
     "batch_size": 16
   }
 }
