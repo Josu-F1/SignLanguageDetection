@@ -19,7 +19,7 @@ MIN_SEQUENCES_PER_SIGN = 10  # Reducido para permitir más señas (era 20)
 def normalize_sequence(seq, target_frames=30):
     """Normaliza una secuencia a un número fijo de frames con interpolación inteligente"""
     if len(seq) == 0:
-        print("⚠️ Secuencia vacía encontrada, llenando con ceros")
+        print("[ADVERTENCIA] Secuencia vacia encontrada, llenando con ceros")
         return np.zeros((target_frames, N_FEATURES))
     
     # Convertir a numpy array si no lo es
@@ -27,7 +27,7 @@ def normalize_sequence(seq, target_frames=30):
     
     # Verificar que cada frame tenga el número correcto de features
     if seq.shape[1] != N_FEATURES:
-        print(f"⚠️ Secuencia con {seq.shape[1]} features, esperadas {N_FEATURES}")
+        print(f"[ADVERTENCIA] Secuencia con {seq.shape[1]} features, esperadas {N_FEATURES}")
         # Ajustar si es necesario
         if seq.shape[1] < N_FEATURES:
             # Rellenar con ceros si faltan features
@@ -92,7 +92,7 @@ def load_and_preprocess_data():
     sequences, labels, sign_names = [], [], []
     signs = [d for d in sorted(os.listdir(DATA_DIR)) if os.path.isdir(os.path.join(DATA_DIR, d))]
     
-    print("🔍 Analizando datos disponibles:")
+    print("[ANALISIS] Analizando datos disponibles:")
     print("-" * 50)
     
     valid_signs = []
@@ -115,10 +115,10 @@ def load_and_preprocess_data():
                     valid_sequences += 1
                 else:
                     invalid_sequences += 1
-                    print(f"  ⚠️ {sequence_file}: {reason}")
+                    print(f"  [ADVERTENCIA] {sequence_file}: {reason}")
                     
             except Exception as e:
-                print(f"  ❌ Error cargando {sequence_file}: {e}")
+                print(f"  [ERROR] Error cargando {sequence_file}: {e}")
                 invalid_sequences += 1
         
         print(f"📁 {sign}: {valid_sequences} válidas, {invalid_sequences} inválidas")
@@ -127,22 +127,22 @@ def load_and_preprocess_data():
             valid_signs.append((sign_idx, sign))
             sign_names.append(sign)
         else:
-            print(f"  ⚠️ Insuficientes secuencias para '{sign}' (mín. {MIN_SEQUENCES_PER_SIGN})")
+            print(f"  [ADVERTENCIA] Insuficientes secuencias para '{sign}' (min. {MIN_SEQUENCES_PER_SIGN})")
     
     return sequences, labels, valid_signs, sign_names
 
 # === CARGAR Y PREPARAR DATOS ===
-print("🚀 Iniciando entrenamiento del modelo de lenguaje de señas")
+print("[ENTRENAMIENTO] Iniciando entrenamiento del modelo de lenguaje de senas")
 print("=" * 60)
 
 # Cargar datos con validación mejorada
 sequences, labels, valid_signs, sign_names = load_and_preprocess_data()
 
 if len(sequences) == 0:
-    print("❌ No se encontraron secuencias válidas para entrenar")
+    print("[ERROR] No se encontraron secuencias validas para entrenar")
     exit(1)
 
-print(f"\n📊 Resumen de datos:")
+print(f"\n[RESUMEN] Resumen de datos:")
 print(f"  - Total secuencias válidas: {len(sequences)}")
 print(f"  - Señas para entrenar: {len(sign_names)}")
 print(f"  - Señas: {', '.join(sign_names)}")
@@ -184,12 +184,12 @@ new_labels = filtered_labels
 y = to_categorical(new_labels).astype(int)
 num_classes = len(label_mapping)
 
-print(f"  ✅ Datos finales:")
+print(f"  [DATOS] Datos finales:")
 print(f"    - Secuencias: {len(X)}")
 print(f"    - Labels: {len(new_labels)}")
 print(f"    - Clases: {num_classes}")
 
-print(f"🎯 Número de clases: {num_classes}")
+print(f"[MODELO] Numero de clases: {num_classes}")
 for name, idx in label_mapping.items():
     count = sum(1 for label in new_labels if label == idx)
     print(f"  - {name}: {count} secuencias")
@@ -202,7 +202,7 @@ print(f"  - Entrenamiento: {X_train.shape[0]} secuencias")
 print(f"  - Validación: {X_test.shape[0]} secuencias")
 
 # Crear modelo mejorado con regularización
-print("\n🏗️ Construyendo modelo...")
+print("\n[CONSTRUCCION] Construyendo modelo...")
 model = Sequential([
     LSTM(64, return_sequences=True, activation='relu', input_shape=(TARGET_FRAMES, N_FEATURES)),
     Dropout(0.2),
@@ -232,7 +232,7 @@ model.compile(
     metrics=['categorical_accuracy']
 )
 
-print(f"📋 Resumen del modelo:")
+print(f"[MODELO] Resumen del modelo:")
 model.summary()
 
 # Configurar callbacks mejorados
@@ -254,10 +254,10 @@ history = model.fit(
 )
 
 # === EVALUACIÓN Y GUARDADO ===
-print(f"\n🧪 Evaluando modelo en datos de prueba...")
+print(f"\n[EVALUACION] Evaluando modelo en datos de prueba...")
 test_loss, test_accuracy = model.evaluate(X_test, y_test, verbose=0)
-print(f"📊 Precisión en datos de prueba: {test_accuracy:.4f}")
-print(f"📊 Pérdida en datos de prueba: {test_loss:.4f}")
+print(f"[RESULTADOS] Precision en datos de prueba: {test_accuracy:.4f}")
+print(f"[RESULTADOS] Perdida en datos de prueba: {test_loss:.4f}")
 
 # Predicciones para reporte detallado
 y_pred = model.predict(X_test, verbose=0)
@@ -266,7 +266,7 @@ y_true_classes = np.argmax(y_test, axis=1)
 
 # Generar reporte de clasificación
 class_names = [name for name, idx in sorted(label_mapping.items(), key=lambda x: x[1])]
-print(f"\n📈 Reporte de clasificación:")
+print(f"\n[REPORTE] Reporte de clasificacion:")
 print(classification_report(y_true_classes, y_pred_classes, target_names=class_names))
 
 # Guardar el modelo

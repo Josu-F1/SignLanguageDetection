@@ -13,7 +13,7 @@ def backup_project():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_dir = f"backup_{timestamp}"
     
-    print(f"🗂️ Creando backup en: {backup_dir}")
+    print(f"[BACKUP] Creando backup en: {backup_dir}")
     os.makedirs(backup_dir, exist_ok=True)
     
     # Lista de archivos/carpetas importantes
@@ -39,7 +39,7 @@ def backup_project():
                 print(f"📄 Copiando archivo: {item}")
                 shutil.copy2(item, backup_dir)
         else:
-            print(f"⚠️ No encontrado: {item}")
+            print(f"[ADVERTENCIA] No encontrado: {item}")
     
     # Crear resumen del backup
     summary = {
@@ -66,11 +66,11 @@ def backup_project():
     with open(os.path.join(backup_dir, 'backup_summary.json'), 'w', encoding='utf-8') as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
     
-    print(f"\n✅ Backup completado!")
-    print(f"📊 Resumen:")
+    print(f"\n[COMPLETADO] Backup completado!")
+    print(f"[RESUMEN] Resumen:")
     print(f"  - Carpetas de señas: {len(summary['data_folders'])}")
     print(f"  - Total secuencias: {summary['total_sequences']}")
-    print(f"  - Modelo presente: {'✅' if summary['model_exists'] else '❌'}")
+    print(f"  - Modelo presente: {'[SI]' if summary['model_exists'] else '[NO]'}")
     print(f"  - Ubicación: {backup_dir}/")
     
     return backup_dir
@@ -78,10 +78,10 @@ def backup_project():
 def restore_from_backup(backup_dir):
     """Restaura desde un backup específico"""
     if not os.path.exists(backup_dir):
-        print(f"❌ Backup no encontrado: {backup_dir}")
+        print(f"[ERROR] Backup no encontrado: {backup_dir}")
         return False
     
-    print(f"🔄 Restaurando desde: {backup_dir}")
+    print(f"[RESTAURAR] Restaurando desde: {backup_dir}")
     
     # Restaurar cada item
     for item in os.listdir(backup_dir):
@@ -92,7 +92,7 @@ def restore_from_backup(backup_dir):
         
         if os.path.isdir(backup_path):
             if os.path.exists(item):
-                print(f"🗑️ Eliminando directorio existente: {item}")
+                print(f"[LIMPIAR] Eliminando directorio existente: {item}")
                 shutil.rmtree(item)
             print(f"📁 Restaurando directorio: {item}")
             shutil.copytree(backup_path, item)
@@ -100,7 +100,7 @@ def restore_from_backup(backup_dir):
             print(f"📄 Restaurando archivo: {item}")
             shutil.copy2(backup_path, item)
     
-    print(f"✅ Restauración completada desde {backup_dir}")
+    print(f"[COMPLETADO] Restauracion completada desde {backup_dir}")
     return True
 
 if __name__ == "__main__":
@@ -118,8 +118,8 @@ if __name__ == "__main__":
                     print(f"  - {backup}")
                 print(f"\nUso: python backup_project.py restore {backups[0]}")
             else:
-                print("❌ No hay backups disponibles")
+                print("[INFO] No hay backups disponibles")
     else:
         backup_dir = backup_project()
-        print(f"\n💡 Para restaurar más tarde:")
+        print(f"\n[INFO] Para restaurar mas tarde:")
         print(f"   python backup_project.py restore {backup_dir}")

@@ -29,7 +29,7 @@ class SignManager:
     
     def list_signs(self):
         """Lista todas las señas disponibles"""
-        print("\n📋 SEÑAS DISPONIBLES:")
+        print("\n[LISTA] SENAS DISPONIBLES:")
         print("=" * 50)
         
         # Señas en signs.json
@@ -45,12 +45,12 @@ class SignManager:
         all_signs = json_signs.union(data_signs)
         
         if not all_signs:
-            print("❌ No hay señas disponibles")
+            print("[INFO] No hay senas disponibles")
             return
             
         for i, sign in enumerate(sorted(all_signs), 1):
-            json_status = "✅" if sign in json_signs else "❌"
-            data_status = "✅" if sign in data_signs else "❌"
+            json_status = "[OK]" if sign in json_signs else "[NO]"
+            data_status = "[OK]" if sign in data_signs else "[NO]"
             
             data_count = 0
             if sign in data_signs:
@@ -62,15 +62,15 @@ class SignManager:
     
     def delete_sign(self, sign_name):
         """Elimina completamente una seña"""
-        print(f"\n🗑️ Eliminando seña: '{sign_name}'")
+        print(f"\n[ELIMINAR] Eliminando sena: '{sign_name}'")
         
         # Eliminar carpeta de datos
         sign_path = self.data_dir / sign_name
         if sign_path.exists():
             shutil.rmtree(sign_path)
-            print(f"✅ Carpeta de datos eliminada: {sign_path}")
+            print(f"[OK] Carpeta de datos eliminada: {sign_path}")
         else:
-            print(f"⚠️ No se encontró carpeta de datos: {sign_path}")
+            print(f"[ADVERTENCIA] No se encontro carpeta de datos: {sign_path}")
         
         # Actualizar signs.json
         signs = self.load_signs()
@@ -78,7 +78,7 @@ class SignManager:
         
         for key in keys_to_remove:
             del signs[key]
-            print(f"✅ Eliminado del JSON: {key} -> {sign_name}")
+            print(f"[OK] Eliminado del JSON: {key} -> {sign_name}")
         
         # Reindexar signs.json
         if signs:
@@ -86,16 +86,16 @@ class SignManager:
             for i, (old_key, value) in enumerate(sorted(signs.items(), key=lambda x: int(x[0]))):
                 new_signs[str(i)] = value
             self.save_signs(new_signs)
-            print("✅ JSON reindexado correctamente")
+            print("[OK] JSON reindexado correctamente")
         else:
             self.save_signs({})
-            print("✅ JSON limpiado (vacío)")
+            print("[OK] JSON limpiado (vacio)")
         
-        print(f"🎉 Seña '{sign_name}' eliminada completamente")
+        print(f"[COMPLETADO] Sena '{sign_name}' eliminada completamente")
     
     def rename_sign(self, old_name, new_name):
         """Renombra una seña"""
-        print(f"\n✏️ Renombrando: '{old_name}' → '{new_name}'")
+        print(f"\n[RENOMBRAR] Renombrando: '{old_name}' -> '{new_name}'")
         
         # Renombrar carpeta de datos
         old_path = self.data_dir / old_name
@@ -103,19 +103,19 @@ class SignManager:
         
         if old_path.exists():
             old_path.rename(new_path)
-            print(f"✅ Carpeta renombrada: {old_path} → {new_path}")
+            print(f"[OK] Carpeta renombrada: {old_path} -> {new_path}")
         else:
-            print(f"⚠️ No se encontró carpeta: {old_path}")
+            print(f"[ADVERTENCIA] No se encontro carpeta: {old_path}")
         
         # Actualizar signs.json
         signs = self.load_signs()
         for key, value in signs.items():
             if value == old_name:
                 signs[key] = new_name
-                print(f"✅ JSON actualizado: {key} -> '{new_name}'")
+                print(f"[OK] JSON actualizado: {key} -> '{new_name}'")
         
         self.save_signs(signs)
-        print(f"🎉 Seña renombrada exitosamente")
+        print(f"[COMPLETADO] Sena renombrada exitosamente")
     
     def clean_orphaned_data(self):
         """Limpia datos huérfanos (carpetas sin entrada en JSON)"""
@@ -125,7 +125,7 @@ class SignManager:
         json_signs = set(signs.values()) if signs else set()
         
         if not self.data_dir.exists():
-            print("❌ No existe carpeta 'data'")
+            print("[ERROR] No existe carpeta 'data'")
             return
         
         orphaned = []

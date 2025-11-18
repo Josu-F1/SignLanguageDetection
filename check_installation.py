@@ -14,10 +14,10 @@ def check_python_version():
     print(f"🐍 Python versión: {version.major}.{version.minor}.{version.micro}")
     
     if version.major == 3 and version.minor == 11:
-        print("✅ Versión de Python compatible")
+        print("[OK] Version de Python compatible")
         return True
     else:
-        print("❌ Se requiere Python 3.11.x")
+        print("[ERROR] Se requiere Python 3.11.x")
         print("   Descargar desde: https://www.python.org/downloads/release/python-3119/")
         return False
 
@@ -36,46 +36,46 @@ def check_library(lib_name, import_name=None, version_attr=None):
         elif hasattr(module, '__version__'):
             version = module.__version__
         
-        print(f"✅ {lib_name}: {version}")
+        print(f"[OK] {lib_name}: {version}")
         return True
     except ImportError:
-        print(f"❌ {lib_name}: NO INSTALADA")
+        print(f"[ERROR] {lib_name}: NO INSTALADA")
         return False
 
 def check_system_requirements():
     """Verifica requisitos del sistema"""
-    print("\n🖥️ Verificando requisitos del sistema...")
+    print("\n[SISTEMA] Verificando requisitos del sistema...")
     
     # Verificar cámara
     try:
         import cv2
         cap = cv2.VideoCapture(0)
         if cap.isOpened():
-            print("✅ Cámara web: Disponible")
+            print("[OK] Camara web: Disponible")
             cap.release()
         else:
-            print("⚠️ Cámara web: No detectada o en uso")
+            print("[ADVERTENCIA] Camara web: No detectada o en uso")
     except:
-        print("❌ No se puede verificar la cámara")
+        print("[ERROR] No se puede verificar la camara")
     
     # Verificar audio (Windows)
     try:
         if sys.platform == "win32":
             import winsound
-            print("✅ Sistema de audio: Disponible (Windows)")
+            print("[OK] Sistema de audio: Disponible (Windows)")
         else:
-            print("ℹ️ Sistema de audio: No verificado en este OS")
+            print("[INFO] Sistema de audio: No verificado en este OS")
     except:
-        print("⚠️ Sistema de audio: No verificado")
+        print("[ADVERTENCIA] Sistema de audio: No verificado")
 
 def main():
     """Función principal de verificación"""
-    print("🚀 VERIFICACIÓN DE INSTALACIÓN - Sistema de Reconocimiento de Señas")
+    print("[VERIFICACION] VERIFICACION DE INSTALACION - Sistema de Reconocimiento de Senas")
     print("=" * 70)
     
     # Verificar versión de Python
     if not check_python_version():
-        print("\n❌ Instalación no válida: Versión de Python incorrecta")
+        print("\n[ERROR] Instalacion no valida: Version de Python incorrecta")
         return False
     
     print("\n📚 Verificando librerías principales...")
@@ -95,7 +95,7 @@ def main():
         if not check_library(lib_name, import_name, version_attr):
             all_critical_ok = False
     
-    print("\n🔊 Verificando librerías de voz...")
+    print("\n[VOZ] Verificando librerias de voz...")
     
     voice_libs = [
         ("pyttsx3", "pyttsx3", "__version__"),
@@ -108,7 +108,7 @@ def main():
         if not check_library(lib_name, import_name, version_attr):
             voice_ok = False
     
-    print("\n📊 Verificando librerías de análisis...")
+    print("\n[ANALISIS] Verificando librerias de analisis...")
     
     analysis_libs = [
         ("Matplotlib", "matplotlib", "__version__"),
@@ -127,15 +127,15 @@ def main():
     
     # Resumen final
     print("\n" + "=" * 70)
-    print("📋 RESUMEN DE VERIFICACIÓN:")
+    print("[RESUMEN] RESUMEN DE VERIFICACION:")
     
     if all_critical_ok:
-        print("✅ Librerías críticas: TODAS INSTALADAS")
+        print("[OK] Librerias criticas: TODAS INSTALADAS")
     else:
-        print("❌ Librerías críticas: FALTAN ALGUNAS")
+        print("[ERROR] Librerias criticas: FALTAN ALGUNAS")
     
     if voice_ok:
-        print("✅ Sistema de voz: FUNCIONANDO")
+        print("[OK] Sistema de voz: FUNCIONANDO")
     else:
         print("❌ Sistema de voz: PROBLEMAS DETECTADOS")
     

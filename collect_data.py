@@ -26,8 +26,12 @@ if not os.path.exists(DATA_DIR):
 
 # Función para capturar nueva seña
 def capture_new_sign():
-    # Pedir el nombre de la seña
-    sign = simpledialog.askstring("Nueva Seña", "¿Qué seña vas a realizar?")
+    # Pedir el nombre de la seña con interfaz mejorada
+    sign = simpledialog.askstring(
+        "Sistema de Recoleccion de Senas", 
+        "Ingresa el nombre de la sena que vas a realizar:\n\n(Ejemplos: hola, adios, gracias, por_favor)",
+        initialvalue=""
+    )
     if not sign:
         return None
     # Limpiar el nombre de la seña
@@ -79,13 +83,16 @@ sequence_length = 30  # Frames por secuencia
 min_confidence = 0.7  # Confianza mínima para guardar frame
 cap = cv2.VideoCapture(0)
 
-print("Sistema de Recolección de Datos para Lenguaje de Señas")
-print("Instrucciones:")
-print("   - Haz cada seña de forma clara y consistente")
-print("   - Mantén las manos visibles en todo momento") 
-print("   - Cada seña se grabará en 40 secuencias de 30 frames")
-print("   - ESC para cancelar secuencia actual")
-print("   - Q para pasar a la siguiente seña")
+print("\n" + "="*60)
+print("    SISTEMA DE RECOLECCION DE DATOS - LENGUAJE DE SENAS")
+print("="*60)
+print("\n[INSTRUCCIONES]")
+print("  • Realiza cada sena de forma clara y consistente")
+print("  • Mantien las manos siempre visibles en camara") 
+print("  • Cada sena se grabara en 40 secuencias de 30 frames")
+print("  • Presiona ESC para cancelar secuencia actual")
+print("  • Presiona Q para continuar con la siguiente sena")
+print("\n" + "-"*60)
 
 while True:
     # Preguntar si quiere agregar una nueva seña o salir
@@ -98,8 +105,9 @@ while True:
     if not os.path.exists(sign_dir):
         os.makedirs(sign_dir)
 
-    print(f'\nPreparando recolección para: "{sign}"')
-    print('Posiciona tus manos y presiona "Q" para comenzar')
+    print(f'\n[PREPARACION] Configurando recoleccion para: "{sign.upper()}"')
+    print('[INFO] Posiciona tus manos frente a la camara')
+    print('[CONTROL] Presiona "Q" cuando estes listo para comenzar')
 
     # Fase de preparación
     ready = False
@@ -131,7 +139,7 @@ while True:
         if key == ord('q'):
             ready = True
         elif key == 27:  # ESC
-            print(f"❌ Cancelada recolección para '{sign}'")
+            print(f"[CANCELADO] Cancelada recoleccion para '{sign}'")
             break
     
     if not ready:
@@ -142,8 +150,8 @@ while True:
         frames_captured = 0
         frames_skipped = 0
         
-        print(f'\n🎬 Iniciando secuencia {sequence + 1}/{num_sequences} para "{sign}"')
-        print('Mantén la seña estable y clara durante 3-4 segundos')
+        print(f'\n[GRABANDO] Secuencia {sequence + 1}/{num_sequences} para "{sign.upper()}"')
+        print('[ACCION] Manten la sena estable y clara durante 3-4 segundos')
         
         while len(frame_data) < sequence_length:
             ret, frame = cap.read()
@@ -188,7 +196,7 @@ while True:
             cv2.putText(frame, f'Secuencia: {sequence + 1}/{num_sequences}', (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
             cv2.putText(frame, status_text, (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, status_color, 2)
             cv2.putText(frame, f' Manos: {num_hands}', (10, 160), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
-            cv2.putText(frame, f'Válidos: {frames_captured} | ❌ Omitidos: {frames_skipped}', (10, h-40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
+            cv2.putText(frame, f'Validos: {frames_captured} | Omitidos: {frames_skipped}', (10, h-40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
             cv2.putText(frame, 'ESC=Cancelar secuencia | Q=Siguiente seña', (10, h-20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
             
             cv2.imshow(' Recolección de Datos - SignLanguage', frame)
@@ -210,7 +218,7 @@ while True:
         else:
             print(f'Secuencia {sequence + 1} descartada: solo {len(frame_data)} frames válidos')
 
-    print(f'\n🎉 Recolección completada para "{sign}": {num_sequences} secuencias')
+    print(f'\n[COMPLETADO] Recoleccion completada para "{sign}": {num_sequences} secuencias')
 
 cap.release()
 cv2.destroyAllWindows()
