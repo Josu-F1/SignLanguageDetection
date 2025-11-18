@@ -189,10 +189,10 @@ while cap.isOpened():
     if processing_blocked and (current_time - last_detection_time) < PROCESSING_COOLDOWN:
         # Mostrar estado de cooldown
         remaining_time = PROCESSING_COOLDOWN - (current_time - last_detection_time)
-        # === AREA DE COOLDOWN ===
-        cv2.putText(frame, f'PROCESANDO...', (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,165,0), 2)
-        cv2.putText(frame, f'Espera: {remaining_time:.1f}s', (20, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,165,0), 2)
-        cv2.putText(frame, f'Ultima: {last_spoken or "Ninguna"}', (20, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200,200,200), 1)
+        # === AREA DE COOLDOWN - POSICION INFERIOR ===
+        cv2.putText(frame, f'PROCESANDO...', (20, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,165,0), 2)
+        cv2.putText(frame, f'Espera: {remaining_time:.1f}s', (20, 145), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,165,0), 2)
+        cv2.putText(frame, f'Ultima: {last_spoken or "Ninguna"}', (20, 165), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200,200,200), 1)
     elif processing_blocked and (current_time - last_detection_time) >= PROCESSING_COOLDOWN:
         # Terminar cooldown
         processing_blocked = False
@@ -215,8 +215,8 @@ while cap.isOpened():
         else:
             # Si no hay suficiente historial, mostrar que está recopilando
             # === AREA DE ANALISIS ===
-            cv2.putText(frame, f'ANALIZANDO...', (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,0), 2)
-            cv2.putText(frame, f'Progreso: {len(prediction_history)}/{MIN_PREDICTION_HISTORY}', (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,0), 2)
+            cv2.putText(frame, f'ANALIZANDO...', (20, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,0), 2)
+            cv2.putText(frame, f'Progreso: {len(prediction_history)}/{MIN_PREDICTION_HISTORY}', (20, 230), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,0), 2)
             idx = np.argmax(prediction)
             confidence_level = prediction[0][idx]
         
@@ -249,11 +249,11 @@ while cap.isOpened():
                     color = (255, 255, 0)  # Azul para inestable
                     status = "Detectando"
                 
-                # === ÁREA PRINCIPAL - SIN SOLAPAMIENTOS ===
-                cv2.putText(frame, f'{status}: {detected_sign.upper()}', (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
-                cv2.putText(frame, f'Confianza: {confidence_level:.1%}', (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,0), 2)
-                cv2.putText(frame, f'Estabilidad: {stable_count}/{MIN_STABLE_FRAMES}', (20, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)
-                cv2.putText(frame, f'Datos: {len(prediction_history)}/{MIN_PREDICTION_HISTORY}', (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200,200,200), 1)
+                # === ÁREA PRINCIPAL - PARTE SUPERIOR ===
+                cv2.putText(frame, f'{status}: {detected_sign.upper()}', (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+                cv2.putText(frame, f'Confianza: {confidence_level:.1%}', (20, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,0), 2)
+                cv2.putText(frame, f'Estabilidad: {stable_count}/{MIN_STABLE_FRAMES}', (20, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)
+                cv2.putText(frame, f'Datos: {len(prediction_history)}/{MIN_PREDICTION_HISTORY}', (20, 95), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200,200,200), 1)
                 
                 # Debug: Mostrar información detallada
                 current_time = time.time()
@@ -287,13 +287,13 @@ while cap.isOpened():
                 current_stable_sign = None
                 frames_without_detection += 1
                 
-                # === SEÑAL DÉBIL ===
-                cv2.putText(frame, f'SEÑAL DÉBIL', (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,165,255), 2)
-                cv2.putText(frame, f'Confianza: {confidence_level:.1%}', (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,165,255), 2)
+                # === SEÑAL DÉBIL - AREA MEDIA ===
+                cv2.putText(frame, f'SEÑAL DÉBIL', (20, 140), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,165,255), 2)
+                cv2.putText(frame, f'Confianza: {confidence_level:.1%}', (20, 165), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,165,255), 2)
         else:
             # Índice inválido - tratar como no reconocida
             frames_without_detection += 1
-            cv2.putText(frame, f'NO RECONOCIDA', (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.1, (0,0,255), 3)
+            cv2.putText(frame, f'NO RECONOCIDA', (20, 180), cv2.FONT_HERSHEY_SIMPLEX, 1.1, (0,0,255), 3)
             print(f"[ADVERTENCIA] El modelo predijo el índice {idx} pero solo hay {len(sign_labels)} señas")
     
     # === MANEJO DE ESTADOS DE DETECCIÓN ===
@@ -301,20 +301,20 @@ while cap.isOpened():
         # Detección activa pero sin señas reconocidas
         frames_without_detection += 1
         if frames_without_detection > MAX_FRAMES_WITHOUT_DETECTION:
-            cv2.putText(frame, f'NO RECONOCIDA', (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
-            cv2.putText(frame, f'Sin señas: {frames_without_detection//30}s', (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,255), 2)
+            cv2.putText(frame, f'NO RECONOCIDA', (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
+            cv2.putText(frame, f'Sin señas: {frames_without_detection//30}s', (20, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,255), 2)
         else:
-            cv2.putText(frame, f'DETECTANDO...', (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,165,0), 2)
+            cv2.putText(frame, f'DETECTANDO...', (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,165,0), 2)
     
     elif detection_active and len(sequence) < SEQ_LEN:
         # Recopilando datos para detección
-        cv2.putText(frame, f'RECOPILANDO...', (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,255), 2)
-        cv2.putText(frame, f'Datos: {len(sequence)}/{SEQ_LEN}', (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 2)
+        cv2.putText(frame, f'RECOPILANDO...', (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,255), 2)
+        cv2.putText(frame, f'Datos: {len(sequence)}/{SEQ_LEN}', (20, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 2)
     
     else:
         # Detección INACTIVA
-        cv2.putText(frame, f'SISTEMA INACTIVO', (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (128,128,128), 2)
-        cv2.putText(frame, f'Presiona ENTER para activar', (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200,200,200), 2)
+        cv2.putText(frame, f'SISTEMA INACTIVO', (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (128,128,128), 2)
+        cv2.putText(frame, f'Presiona ENTER para activar', (20, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200,200,200), 2)
     
     # === INFORMACIÓN INFERIOR - BIEN SEPARADA ===
     h = frame.shape[0]  # Altura del frame
