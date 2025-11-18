@@ -79,8 +79,8 @@ sequence_length = 30  # Frames por secuencia
 min_confidence = 0.7  # Confianza mínima para guardar frame
 cap = cv2.VideoCapture(0)
 
-print("🚀 Sistema de Recolección de Datos para Lenguaje de Señas")
-print("📋 Instrucciones:")
+print("Sistema de Recolección de Datos para Lenguaje de Señas")
+print("Instrucciones:")
 print("   - Haz cada seña de forma clara y consistente")
 print("   - Mantén las manos visibles en todo momento") 
 print("   - Cada seña se grabará en 40 secuencias de 30 frames")
@@ -98,8 +98,8 @@ while True:
     if not os.path.exists(sign_dir):
         os.makedirs(sign_dir)
 
-    print(f'\n🎯 Preparando recolección para: "{sign}"')
-    print('💡 Posiciona tus manos y presiona "Q" para comenzar')
+    print(f'\nPreparando recolección para: "{sign}"')
+    print('Posiciona tus manos y presiona "Q" para comenzar')
 
     # Fase de preparación
     ready = False
@@ -120,12 +120,12 @@ while True:
         else:
             num_hands = 0
             
-        cv2.putText(frame, f'🎯 Preparado para: {sign.upper()}', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-        cv2.putText(frame, f'👐 Manos detectadas: {num_hands}', (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
+        cv2.putText(frame, f'Preparado para: {sign.upper()}', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        cv2.putText(frame, f' Manos detectadas: {num_hands}', (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2)
         cv2.putText(frame, 'Presiona Q para empezar a grabar', (10, 130), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 0), 2)
         cv2.putText(frame, 'ESC para cancelar esta seña', (10, 170), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200, 200, 200), 1)
         
-        cv2.imshow('🤟 Recolección de Datos - SignLanguage', frame)
+        cv2.imshow('Recolección de Datos - SignLanguage', frame)
         
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):
@@ -143,7 +143,7 @@ while True:
         frames_skipped = 0
         
         print(f'\n🎬 Iniciando secuencia {sequence + 1}/{num_sequences} para "{sign}"')
-        print('💡 Mantén la seña estable y clara durante 3-4 segundos')
+        print('Mantén la seña estable y clara durante 3-4 segundos')
         
         while len(frame_data) < sequence_length:
             ret, frame = cap.read()
@@ -170,11 +170,11 @@ while True:
                 frame_data.append(hand_coords)
                 frames_captured += 1
                 status_color = (0, 255, 0)  # Verde para frame válido
-                status_text = f"✅ Frame {len(frame_data)}/{sequence_length}"
+                status_text = f"Frame {len(frame_data)}/{sequence_length}"
             else:
                 frames_skipped += 1
                 status_color = (0, 0, 255)  # Rojo para frame inválido
-                status_text = f"❌ Sin mano detectada ({frames_skipped} omitidos)"
+                status_text = f"Sin mano detectada ({frames_skipped} omitidos)"
             
             # Dibujar todas las manos detectadas
             num_hands = 0
@@ -184,18 +184,18 @@ while True:
                     mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
             
             # Mostrar información detallada
-            cv2.putText(frame, f'🎯 Seña: {sign.upper()}', (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
-            cv2.putText(frame, f'📊 Secuencia: {sequence + 1}/{num_sequences}', (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+            cv2.putText(frame, f' Seña: {sign.upper()}', (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
+            cv2.putText(frame, f'Secuencia: {sequence + 1}/{num_sequences}', (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
             cv2.putText(frame, status_text, (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, status_color, 2)
-            cv2.putText(frame, f'👐 Manos: {num_hands}', (10, 160), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
-            cv2.putText(frame, f'✅ Válidos: {frames_captured} | ❌ Omitidos: {frames_skipped}', (10, h-40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
+            cv2.putText(frame, f' Manos: {num_hands}', (10, 160), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
+            cv2.putText(frame, f'Válidos: {frames_captured} | ❌ Omitidos: {frames_skipped}', (10, h-40), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
             cv2.putText(frame, 'ESC=Cancelar secuencia | Q=Siguiente seña', (10, h-20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
             
-            cv2.imshow('🤟 Recolección de Datos - SignLanguage', frame)
+            cv2.imshow(' Recolección de Datos - SignLanguage', frame)
             
             key = cv2.waitKey(1) & 0xFF
             if key == 27:  # ESC para cancelar secuencia
-                print(f"⚠️ Secuencia {sequence} cancelada")
+                print(f" Secuencia {sequence} cancelada")
                 break
             elif key == ord('q'):  # Q para terminar esta seña
                 break
@@ -206,9 +206,9 @@ while True:
             frame_data = frame_data[:sequence_length]
             npy_path = os.path.join(sign_dir, f'seq_{sequence}.npy')
             np.save(npy_path, frame_data)
-            print(f'✅ Secuencia {sequence + 1} guardada: {frames_captured} frames válidos')
+            print(f'Secuencia {sequence + 1} guardada: {frames_captured} frames válidos')
         else:
-            print(f'❌ Secuencia {sequence + 1} descartada: solo {len(frame_data)} frames válidos')
+            print(f'Secuencia {sequence + 1} descartada: solo {len(frame_data)} frames válidos')
 
     print(f'\n🎉 Recolección completada para "{sign}": {num_sequences} secuencias')
 

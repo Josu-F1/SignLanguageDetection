@@ -33,23 +33,23 @@ class VoiceSystem:
                 with open('signs.json', 'r', encoding='utf-8') as f:
                     signs_data = json.load(f)
                     words = list(signs_data.values())
-                print(f"📋 Cargadas {len(words)} palabras desde signs.json: {', '.join(words)}")
+                print(f"[VOZ] Cargadas {len(words)} palabras desde signs.json: {', '.join(words)}")
             except Exception as e:
-                print(f"⚠️ Error leyendo signs.json: {e}")
+                print(f"[ERROR] Error leyendo signs.json: {e}")
                 words = ["hola", "adios", "como_estas", "mal", "como", "cuanto", "sientes"]
         else:
             # Palabras por defecto si no existe signs.json
             words = ["hola", "adios", "como_estas", "mal", "como", "cuanto", "sientes"]
-            print("📋 Usando palabras por defecto (signs.json no encontrado)")
+            print("[VOZ] Usando palabras por defecto (signs.json no encontrado)")
         
-        print("🎵 Pre-cargando archivos de voz...")
+        print("[VOZ] Pre-cargando archivos de voz...")
         for word in words:
             try:
                 self.generate_audio_file(word)
-                print(f"✅ Audio generado para: {word}")
+                print(f"[VOZ] Audio generado para: {word}")
             except Exception as e:
-                print(f"⚠️ Error generando audio para {word}: {e}")
-        print("🎵 Pre-carga de audio completada")
+                print(f"[ERROR] Error generando audio para {word}: {e}")
+        print("[VOZ] Pre-carga de audio completada")
     
     def generate_audio_file(self, text):
         """Genera un archivo de audio para el texto dado"""
@@ -71,7 +71,7 @@ class VoiceSystem:
             return temp_path
             
         except Exception as e:
-            print(f"❌ Error generando audio para '{text}': {e}")
+            print(f"[ERROR] Error generando audio para '{text}': {e}")
             return None
     
     def speak_sync(self, text):
@@ -85,13 +85,13 @@ class VoiceSystem:
             # Obtener archivo de audio (generar dinámicamente si no existe)
             audio_file = self.audio_files.get(text)
             if not audio_file:
-                print(f"🎵 Generando audio dinámicamente para: '{text}'")
+                print(f"[VOZ] Generando audio dinámicamente para: '{text}'")
                 audio_file = self.generate_audio_file(text)
                 if audio_file:
-                    print(f"✅ Audio generado exitosamente para: '{text}'")
+                    print(f"[VOZ] Audio generado exitosamente para: '{text}'")
             
             if audio_file and os.path.exists(audio_file):
-                print(f"🔊 Reproduciendo: {text}")
+                print(f"[VOZ] Reproduciendo: {text}")
                 
                 # Reproducir con pygame
                 pygame.mixer.music.load(audio_file)
@@ -101,14 +101,14 @@ class VoiceSystem:
                 while pygame.mixer.music.get_busy():
                     time.sleep(0.1)
                 
-                print(f"✅ Completado: {text}")
+                print(f"[VOZ] Completado: {text}")
                 return True
             else:
-                print(f"❌ No se pudo generar audio para: {text}")
+                print(f"[ERROR] No se pudo generar audio para: {text}")
                 return False
                 
         except Exception as e:
-            print(f"❌ Error reproduciendo '{text}': {e}")
+            print(f"[ERROR] Error reproduciendo '{text}': {e}")
             return False
         finally:
             self.is_speaking = False
@@ -157,13 +157,13 @@ class VoiceSystem:
                 # Generar audio para palabras nuevas que no estén en cache
                 for word in new_words:
                     if word not in self.audio_files:
-                        print(f"🆕 Nueva palabra detectada: '{word}' - Generando audio...")
+                        print(f"[VOZ] Nueva palabra detectada: '{word}' - Generando audio...")
                         self.generate_audio_file(word)
                         
-                print(f"🔄 Sistema actualizado con {len(new_words)} palabras")
+                print(f"[VOZ] Sistema actualizado con {len(new_words)} palabras")
                 return True
             except Exception as e:
-                print(f"❌ Error recargando signs.json: {e}")
+                print(f"[ERROR] Error recargando signs.json: {e}")
                 return False
         return False
     
@@ -179,7 +179,7 @@ class VoiceSystem:
 
 # Función de prueba
 if __name__ == "__main__":
-    print("🧪 Probando sistema de voz alternativo...")
+    print("[TEST] Probando sistema de voz alternativo...")
     
     voice_system = VoiceSystem()
     
@@ -187,13 +187,13 @@ if __name__ == "__main__":
     test_words = ["hola", "adios", "como", "mal"]
     
     for word in test_words:
-        print(f"\n📢 Probando: {word}")
+        print(f"\n[TEST] Probando: {word}")
         success = voice_system.speak_sync(word)
         if success:
-            print(f"✅ {word} - OK")
+            print(f"[OK] {word} - OK")
         else:
-            print(f"❌ {word} - ERROR")
+            print(f"[ERROR] {word} - ERROR")
         time.sleep(1)
     
     voice_system.cleanup()
-    print("\n🏁 Prueba completada")
+    print("\n[TEST] Prueba completada")

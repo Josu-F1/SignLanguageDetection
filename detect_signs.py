@@ -8,12 +8,14 @@ from keras.models import load_model
 from collections import deque
 from voice_system import VoiceSystem
 
-# === CONFIGURACIÓN MEJORADA ===
+# === CONFIGURACIÓN MEJORADA - ALTA PRECISIÓN ===
 SEQ_LEN = 30
 FEATURES = 63  # Mantenemos 63 para compatibilidad con el modelo actual
-CONFIDENCE_THRESHOLD = 0.50  # 50% para detectar MUY fácilmente
-REPEAT_INTERVAL = 4.0  # Más tiempo para evitar repeticiones
-MIN_STABLE_FRAMES = 8  # MÁS FRAMES para mayor estabilidad
+CONFIDENCE_THRESHOLD = 0.75  # 75% para mayor precisión
+REPEAT_INTERVAL = 6.0  # Más tiempo para evitar repeticiones
+MIN_STABLE_FRAMES = 15  # Más frames para mayor estabilidad
+PROCESSING_COOLDOWN = 3.0  # Tiempo de espera entre detecciones (segundos)
+MIN_PREDICTION_HISTORY = 8  # Mínimo de predicciones para promediar
 
 # === CARGAR MODELO Y SEÑAS ===
 model = load_model('sign_language_model.keras')
@@ -50,11 +52,11 @@ hands = mp_hands.Hands(
 )
 
 # === CONFIGURAR VOZ - SISTEMA MEJORADO ===
-print("🔊 Inicializando sistema de voz mejorado...")
+print("[VOZ] Inicializando sistema de voz mejorado...")
 voice_system = VoiceSystem()
 
 # Recargar señas dinámicamente si es necesario
-print("🔄 Sincronizando con señas actuales...")
+print("[VOZ] Sincronizando con señas actuales...")
 voice_system.reload_signs()
 
 def speak(text):
@@ -63,20 +65,20 @@ def speak(text):
         # Intentar usar el nuevo sistema de voz
         success = voice_system.speak_sync(text)
         if success:
-            print(f"✅ Voz completada: {text}")
+            print(f"[VOZ] Completada: {text}")
         else:
-            print(f"⚠️ Primera tentativa falló, reintentando para: {text}")
+            print(f"[VOZ] Primera tentativa falló, reintentando para: {text}")
             # Segundo intento: forzar regeneración del audio
             if text in voice_system.audio_files:
                 del voice_system.audio_files[text]  # Limpiar cache
             success = voice_system.speak_sync(text)
             if success:
-                print(f"✅ Voz completada en segundo intento: {text}")
+                print(f"[VOZ] Completada en segundo intento: {text}")
             else:
-                print(f"❌ Falló completamente para: {text}")
+                print(f"[ERROR] Falló completamente para: {text}")
     except Exception as e:
-        print(f"❌ Error en síntesis de voz: {e}")
-        print(f"🔄 Intentando generar audio dinámicamente para '{text}'...")
+        print(f"[ERROR] Error en síntesis de voz: {e}")
+        print(f"[VOZ] Intentando generar audio dinámicamente para '{text}'...")
 
 # === FUNCIÓN PARA EXTRAER COORDENADAS DE DOS MANOS ===
 def extract_best_hand_landmarks(multi_hand_landmarks, handedness_results):
@@ -126,24 +128,31 @@ sequence = deque(maxlen=SEQ_LEN)
 # Variables para control de voz y estabilidad
 last_spoken = None
 last_speak_time = 0
-prediction_history = deque(maxlen=10)  # Historial de predicciones para promediar
+last_detection_time = 0  # Tiempo de la última detección procesada
+prediction_history = deque(maxlen=15)  # Historial más largo para mejor promedio
 current_stable_sign = None
 stable_count = 0
-confidence_history = deque(maxlen=10)  # Historial de confianzas
+confidence_history = deque(maxlen=15)  # Historial de confianzas más largo
+processing_blocked = False  # Flag para bloquear procesamiento durante cooldown
 
 # === CONTROL DE DETECCIÓN ===
 detection_active = False  # Iniciar con detección INACTIVA
 frames_without_detection = 0
 MAX_FRAMES_WITHOUT_DETECTION = 90  # 3 segundos a 30fps
 
-print("\n🚀 SISTEMA DE RECONOCIMIENTO DE SEÑAS")
+print("\n[SISTEMA] RECONOCIMIENTO DE SEÑAS")
 print("=" * 50)
-print("📋 CONTROLES:")
+print("[CONTROLES]")
 print("   ENTER - Activar/Desactivar detección")
 print("   ESPACIO - Forzar voz (si hay seña detectada)")
 print("   Q - Salir del programa")
 print("=" * 50)
-print("💡 Presiona ENTER para comenzar la detección...")
+print("[INFO] Presiona ENTER para comenzar la detección...")
+print(f"[CONFIG] Configuración de precisión:")
+print(f"   - Confianza mínima: {CONFIDENCE_THRESHOLD*100:.0f}%")
+print(f"   - Estabilidad requerida: {MIN_STABLE_FRAMES} frames")
+print(f"   - Cooldown entre detecciones: {PROCESSING_COOLDOWN}s")
+print(f"   - Historial mínimo: {MIN_PREDICTION_HISTORY} predicciones")
 while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
@@ -173,21 +182,41 @@ while cap.isOpened():
     detected_sign = None
     confidence_level = 0.0
     
-    # Cuando hay suficientes frames Y la detección está activa
-    if detection_active and len(sequence) == SEQ_LEN:
+    # === SISTEMA DE COOLDOWN Y PROCESAMIENTO INTELIGENTE ===
+    current_time = time.time()
+    
+    # Verificar si estamos en periodo de cooldown
+    if processing_blocked and (current_time - last_detection_time) < PROCESSING_COOLDOWN:
+        # Mostrar estado de cooldown
+        remaining_time = PROCESSING_COOLDOWN - (current_time - last_detection_time)
+        # === AREA DE COOLDOWN ===
+        cv2.putText(frame, f'PROCESANDO...', (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,165,0), 2)
+        cv2.putText(frame, f'Espera: {remaining_time:.1f}s', (20, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,165,0), 2)
+        cv2.putText(frame, f'Ultima: {last_spoken or "Ninguna"}', (20, 75), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200,200,200), 1)
+    elif processing_blocked and (current_time - last_detection_time) >= PROCESSING_COOLDOWN:
+        # Terminar cooldown
+        processing_blocked = False
+        print(f"[SISTEMA] Cooldown terminado - Listo para nueva detección")
+    
+    # Cuando hay suficientes frames Y la detección está activa Y no hay cooldown
+    if detection_active and len(sequence) == SEQ_LEN and not processing_blocked:
         X = np.expand_dims(np.array(sequence), axis=0)  # (1,30,63) - Mejor mano
         prediction = model.predict(X, verbose=0)
         
         # Agregar predicción al historial
         prediction_history.append(prediction[0])
         
-        # Si tenemos suficiente historial, promediar las predicciones
-        if len(prediction_history) >= 5:
+        # Requiere más historial para mayor precisión
+        if len(prediction_history) >= MIN_PREDICTION_HISTORY:
             # Promediar las últimas predicciones para mayor estabilidad
             avg_prediction = np.mean(list(prediction_history), axis=0)
             idx = np.argmax(avg_prediction)
             confidence_level = avg_prediction[idx]
         else:
+            # Si no hay suficiente historial, mostrar que está recopilando
+            # === AREA DE ANALISIS ===
+            cv2.putText(frame, f'ANALIZANDO...', (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,0), 2)
+            cv2.putText(frame, f'Progreso: {len(prediction_history)}/{MIN_PREDICTION_HISTORY}', (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,0), 2)
             idx = np.argmax(prediction)
             confidence_level = prediction[0][idx]
         
@@ -206,21 +235,25 @@ while cap.isOpened():
                 
                 frames_without_detection = 0  # Resetear contador
                 
-                # Mostrar predicción actual con más información
-                if stable_count >= MIN_STABLE_FRAMES and confidence_level > 0.50:  # 50% - MUY FÁCIL
+                # Mostrar predicción actual con información detallada
+                if stable_count >= MIN_STABLE_FRAMES and confidence_level > 0.80:  # 80% - ALTA PRECISIÓN
                     color = (0, 255, 0)  # Verde para predicción MUY confiable
                     status = "¡DETECTADO!"
-                elif stable_count >= MIN_STABLE_FRAMES:
+                elif stable_count >= MIN_STABLE_FRAMES and confidence_level > 0.65:  # 65% - BUENA PRECISIÓN
                     color = (0, 255, 255)  # Amarillo para estable pero no muy confiable
-                    status = "Estable"
+                    status = "Probable"
+                elif stable_count >= (MIN_STABLE_FRAMES // 2):  # Mitad de estabilidad
+                    color = (255, 165, 0)  # Naranja para en proceso
+                    status = "Analizando"
                 else:
                     color = (255, 255, 0)  # Azul para inestable
-                    status = "Procesando"
+                    status = "Detectando"
                 
-                cv2.putText(frame, f'{status}: {detected_sign.upper()}', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 3)
-                cv2.putText(frame, f'Confianza: {confidence_level:.3f}', (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,0), 2)
-                cv2.putText(frame, f'Estabilidad: {stable_count}/{MIN_STABLE_FRAMES}', (10, 130), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), 2)
-                cv2.putText(frame, f'Predicciones: {len(prediction_history)}/10', (10, 160), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200,200,200), 1)
+                # === ÁREA PRINCIPAL - SIN SOLAPAMIENTOS ===
+                cv2.putText(frame, f'{status}: {detected_sign.upper()}', (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.8, color, 2)
+                cv2.putText(frame, f'Confianza: {confidence_level:.1%}', (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,0), 2)
+                cv2.putText(frame, f'Estabilidad: {stable_count}/{MIN_STABLE_FRAMES}', (20, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,255), 1)
+                cv2.putText(frame, f'Datos: {len(prediction_history)}/{MIN_PREDICTION_HISTORY}', (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200,200,200), 1)
                 
                 # Debug: Mostrar información detallada
                 current_time = time.time()
@@ -228,15 +261,25 @@ while cap.isOpened():
                 
                 # Solo mostrar información cada 10 frames para reducir spam
                 if stable_count % 10 == 0 or stable_count == MIN_STABLE_FRAMES:
-                    print(f"📊 {detected_sign} - Confianza: {confidence_level:.2f}, Estable: {stable_count}/{MIN_STABLE_FRAMES}, Tiempo: {time_passed:.1f}s")
+                    print(f"[DETECCION] {detected_sign} - Confianza: {confidence_level:.2f}, Estable: {stable_count}/{MIN_STABLE_FRAMES}, Tiempo: {time_passed:.1f}s")
                 
-                # Usar el sistema de voz inteligente SOLO si está muy estable
-                if stable_count >= MIN_STABLE_FRAMES and confidence_level > 0.50:  # 50% - MUY FÁCIL
+                # Usar el sistema de voz SOLO con alta precisión y estabilidad
+                if stable_count >= MIN_STABLE_FRAMES and confidence_level > 0.75:  # 75% - ALTA PRECISIÓN
                     # El sistema de voz decide si debe hablar o no
-                    if voice_system.speak_if_ready(detected_sign, min_interval=4, async_mode=False):  # Síncrono para mejor control
-                        print(f"🗣️ ¡DETECTADO Y HABLANDO!: {detected_sign} (confianza: {confidence_level:.2f}, estabilidad: {stable_count})")
+                    if voice_system.speak_if_ready(detected_sign, min_interval=6, async_mode=False):  # Síncrono para mejor control
+                        print(f"[DETECTADO] {detected_sign} (confianza: {confidence_level:.2f}, estabilidad: {stable_count})")
                         last_spoken = detected_sign
                         last_speak_time = current_time
+                        last_detection_time = current_time 
+                        processing_blocked = True  # Activar cooldown
+                        
+                        # Limpiar historiales para la próxima detección
+                        prediction_history.clear()
+                        sequence.clear()
+                        stable_count = 0
+                        current_stable_sign = None
+                        
+                        print(f"Iniciando cooldown de {PROCESSING_COOLDOWN}s para mayor precisión")
                     
             else:
                 # Confianza baja - resetear contador e incrementar frames sin detección
@@ -244,50 +287,61 @@ while cap.isOpened():
                 current_stable_sign = None
                 frames_without_detection += 1
                 
-                cv2.putText(frame, f'Señal débil...', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,165,255), 2)
-                cv2.putText(frame, f'Confianza: {confidence_level:.2f}', (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,165,255), 2)
+                # === SEÑAL DÉBIL ===
+                cv2.putText(frame, f'SEÑAL DÉBIL', (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,165,255), 2)
+                cv2.putText(frame, f'Confianza: {confidence_level:.1%}', (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,165,255), 2)
         else:
             # Índice inválido - tratar como no reconocida
             frames_without_detection += 1
-            cv2.putText(frame, f'NO RECONOCIDA', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
-            print(f"⚠️ El modelo predijo el índice {idx} pero solo hay {len(sign_labels)} señas")
+            cv2.putText(frame, f'NO RECONOCIDA', (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.1, (0,0,255), 3)
+            print(f"[ADVERTENCIA] El modelo predijo el índice {idx} pero solo hay {len(sign_labels)} señas")
     
     # === MANEJO DE ESTADOS DE DETECCIÓN ===
     elif detection_active and len(sequence) == SEQ_LEN:
         # Detección activa pero sin señas reconocidas
         frames_without_detection += 1
         if frames_without_detection > MAX_FRAMES_WITHOUT_DETECTION:
-            cv2.putText(frame, f'NO RECONOCIDA', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
-            cv2.putText(frame, f'Sin señas por {frames_without_detection//30}s', (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255), 2)
+            cv2.putText(frame, f'NO RECONOCIDA', (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
+            cv2.putText(frame, f'Sin señas: {frames_without_detection//30}s', (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,255), 2)
         else:
-            cv2.putText(frame, f'Detectando...', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,165,0), 2)
+            cv2.putText(frame, f'DETECTANDO...', (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,165,0), 2)
     
     elif detection_active and len(sequence) < SEQ_LEN:
         # Recopilando datos para detección
-        cv2.putText(frame, f'Recopilando datos... ({len(sequence)}/{SEQ_LEN})', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2)
+        cv2.putText(frame, f'RECOPILANDO...', (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,255,255), 2)
+        cv2.putText(frame, f'Datos: {len(sequence)}/{SEQ_LEN}', (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255,255,255), 2)
     
     else:
         # Detección INACTIVA
-        cv2.putText(frame, f'🛑 DETECCIÓN INACTIVA', (10, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (128,128,128), 3)
-        cv2.putText(frame, f'Presiona ENTER para activar', (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (200,200,200), 2)
+        cv2.putText(frame, f'SISTEMA INACTIVO', (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (128,128,128), 2)
+        cv2.putText(frame, f'Presiona ENTER para activar', (20, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200,200,200), 2)
     
-    # Mostrar información adicional y ayuda
-    cv2.putText(frame, f'Señas: {", ".join(sign_labels)}', (10, frame.shape[0] - 120), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200,200,200), 1)
-    cv2.putText(frame, f'Umbral confianza: {CONFIDENCE_THRESHOLD}', (10, frame.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200,200,200), 1)
-    cv2.putText(frame, f'Ultima palabra: {last_spoken or "Ninguna"}', (10, frame.shape[0] - 80), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (200,200,200), 1)
-    cv2.putText(frame, f'CONSEJOS:', (10, frame.shape[0] - 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 1)
-    cv2.putText(frame, f'- Haz la seña lentamente y mantenla 2-3 segundos', (10, frame.shape[0] - 40), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200,200,200), 1)
-    cv2.putText(frame, f'- ENTER=Activar/Desactivar | Q=Salir | ESPACIO=Forzar voz', (10, frame.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (200,200,200), 1)
+    # === INFORMACIÓN INFERIOR - BIEN SEPARADA ===
+    h = frame.shape[0]  # Altura del frame
     
-    cv2.imshow('🤟 Reconocimiento de Señas con Voz 🔊', frame)
+    # INFORMACIÓN COMPACTA EN LA PARTE INFERIOR
+    cv2.putText(frame, f'Señas: {", ".join(sign_labels)}', (10, h - 65), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (150,150,150), 1)
+    cv2.putText(frame, f'Config: {CONFIDENCE_THRESHOLD*100:.0f}% | {MIN_STABLE_FRAMES}f | {PROCESSING_COOLDOWN}s', (10, h - 45), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0,200,200), 1)
+    cv2.putText(frame, f'Última: {last_spoken or "Ninguna"}', (10, h - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,0), 1)
+    cv2.putText(frame, f'ENTER=On/Off | ESPACIO=Voz | Q=Salir', (10, h - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (100,200,100), 1)
+    
+    # === ESTADO COMPACTO (lado derecho) ===
+    w = frame.shape[1]  # Ancho del frame
+    
+    # Estado simple
+    status_text = "ON" if detection_active else "OFF"
+    cv2.putText(frame, status_text, (w - 90, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0) if detection_active else (0,0,255), 2)
+    
+    # Manos detectadas
+    cv2.putText(frame, f'Manos: {num_hands_detected}', (w - 130, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,255), 1)
+    
+    # Cooldown activo
+    if processing_blocked:
+        remaining = PROCESSING_COOLDOWN - (current_time - last_detection_time)
+        cv2.putText(frame, f'{remaining:.1f}s', (w - 80, 65), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,165,0), 1)
 
-    # === INFORMACIÓN EN PANTALLA ===
-    # Mostrar estado de detección
-    detection_status = "🟢 ACTIVA" if detection_active else "🔴 INACTIVA"
-    cv2.putText(frame, f'Detección: {detection_status}', (10, frame.shape[0] - 140), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0) if detection_active else (0,0,255), 2)
-    
-    # Mostrar información de detección de manos
-    cv2.putText(frame, f'Manos detectadas: {num_hands_detected}', (10, 200), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2)
+    # === MOSTRAR FRAME FINAL ===
+    cv2.imshow('Reconocimiento de Senas con Voz', frame)
 
     # === CONTROLES Y INFORMACIÓN ADICIONAL ===
     key = cv2.waitKey(1) & 0xFF
@@ -296,25 +350,25 @@ while cap.isOpened():
     elif key == 13:  # ENTER para activar/desactivar detección
         detection_active = not detection_active
         if detection_active:
-            print(f"🟢 DETECCIÓN ACTIVADA")
+            print(f"[SISTEMA] DETECCION ACTIVADA")
             sequence.clear()  # Limpiar secuencia al activar
             frames_without_detection = 0
             stable_count = 0
             current_stable_sign = None
         else:
-            print(f"🔴 DETECCIÓN DESACTIVADA")
+            print(f"[SISTEMA] DETECCION DESACTIVADA")
             sequence.clear()  # Limpiar secuencia al desactivar
     elif key == ord(' '):  # Barra espaciadora para forzar voz
         if detection_active and current_stable_sign and stable_count >= MIN_STABLE_FRAMES:
-            print(f"🔊 Forzando voz: {current_stable_sign}")
+            print(f"[VOZ] Forzando voz: {current_stable_sign}")
             voice_system.speak_if_ready(current_stable_sign, min_interval=0, async_mode=False)  # Sin intervalo mínimo
             last_spoken = current_stable_sign
             last_speak_time = time.time()
         else:
-            print("⚠️ No hay seña estable para reproducir o detección inactiva")
+            print("[ADVERTENCIA] No hay seña estable para reproducir o detección inactiva")
 
 cap.release()
 cv2.destroyAllWindows()
 hands.close()
 voice_system.cleanup()
-print("🏁 Sistema cerrado correctamente")
+print("[SISTEMA] Cerrado correctamente")

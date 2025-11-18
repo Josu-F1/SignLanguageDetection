@@ -62,7 +62,8 @@ if [ $? -eq 0 ]; then
     echo
     echo "================================================"
     echo "  🎉 ¡INSTALACION COMPLETADA EXITOSAMENTE!"
-    echo "================================================"
+    echo "=============================
+    ==================="
     echo
     echo "📋 Comandos disponibles:"
     echo "   python3.11 collect_data.py    - Recopilar datos"
