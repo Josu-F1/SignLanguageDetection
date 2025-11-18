@@ -296,6 +296,7 @@ El sistema viene con soporte para estas señas (puedes agregar más):
 - 😞 **mal**
 - 🔢 **cuanto**
 - 💭 **sientes**
+fotos estas valen
 
 ## 🚀 Agregar Nuevas Señas
 
