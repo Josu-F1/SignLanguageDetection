@@ -8,7 +8,7 @@ from keras.models import load_model
 from collections import deque
 from voice_system import VoiceSystem
 
-# === CONFIGURACIÓN MEJORADA - ALTA PRECISIÓN ===
+# === CONFIGURACION MEJORADA - ALTA PRECISION ===
 SEQ_LEN = 30
 FEATURES = 63  # Mantenemos 63 para compatibilidad con el modelo actual
 CONFIDENCE_THRESHOLD = 0.75  # 75% para mayor precisión
@@ -17,7 +17,7 @@ MIN_STABLE_FRAMES = 15  # Más frames para mayor estabilidad
 PROCESSING_COOLDOWN = 3.0  # Tiempo de espera entre detecciones (segundos)
 MIN_PREDICTION_HISTORY = 8  # Mínimo de predicciones para promediar
 
-# === CARGAR MODELO Y SEÑAS ===
+# === CARGAR MODELO Y SENAS ===
 model = load_model('sign_language_model.keras')
 
 # Información del modelo
@@ -34,11 +34,11 @@ if os.path.exists('signs.json'):
     with open('signs.json', 'r', encoding='utf-8') as f:
         signs = json.load(f)
 else:
-    raise FileNotFoundError("No se encontró 'signs.json' con las etiquetas de las señas.")
+    raise FileNotFoundError("No se encontro 'signs.json' con las etiquetas de las senas.")
 
 sign_labels = [signs[k] for k in sorted(signs.keys(), key=lambda x: int(x))]
-print("Señas disponibles:", sign_labels)
-print(f"Número de señas en signs.json: {len(sign_labels)}")
+print("Senas disponibles:", sign_labels)
+print(f"Numero de senas en signs.json: {len(sign_labels)}")
 
 # === CONFIGURAR MEDIAPIPE ===
 mp_hands = mp.solutions.hands
@@ -47,16 +47,16 @@ mp_draw = mp.solutions.drawing_utils
 hands = mp_hands.Hands(
     static_image_mode=False,
     max_num_hands=2,  # DETECTAR LAS DOS MANOS
-    min_detection_confidence=0.5,  # Reducido para mejor detección
-    min_tracking_confidence=0.5   # Reducido para mejor detección
+    min_detection_confidence=0.5,  # Reducido para mejor deteccion
+    min_tracking_confidence=0.5   # Reducido para mejor deteccion
 )
 
 # === CONFIGURAR VOZ - SISTEMA MEJORADO ===
 print("[VOZ] Inicializando sistema de voz mejorado...")
 voice_system = VoiceSystem()
 
-# Recargar señas dinámicamente si es necesario
-print("[VOZ] Sincronizando con señas actuales...")
+# Recargar senas dinamicamente si es necesario
+print("[VOZ] Sincronizando con senas actuales...")
 voice_system.reload_signs()
 
 def speak(text):
@@ -128,31 +128,31 @@ sequence = deque(maxlen=SEQ_LEN)
 # Variables para control de voz y estabilidad
 last_spoken = None
 last_speak_time = 0
-last_detection_time = 0  # Tiempo de la última detección procesada
-prediction_history = deque(maxlen=15)  # Historial más largo para mejor promedio
+last_detection_time = 0  # Tiempo de la ultima deteccion procesada
+prediction_history = deque(maxlen=15)  # Historial mas largo para mejor promedio
 current_stable_sign = None
 stable_count = 0
-confidence_history = deque(maxlen=15)  # Historial de confianzas más largo
+confidence_history = deque(maxlen=15)  # Historial de confianzas mas largo
 processing_blocked = False  # Flag para bloquear procesamiento durante cooldown
 
-# === CONTROL DE DETECCIÓN ===
-detection_active = False  # Iniciar con detección INACTIVA
+# === CONTROL DE DETECCION ===
+detection_active = False  # Iniciar con deteccion INACTIVA
 frames_without_detection = 0
 MAX_FRAMES_WITHOUT_DETECTION = 90  # 3 segundos a 30fps
 
-print("\n[SISTEMA] RECONOCIMIENTO DE SEÑAS")
+print("\n[SISTEMA] RECONOCIMIENTO DE SENAS")
 print("=" * 50)
 print("[CONTROLES]")
-print("   ENTER - Activar/Desactivar detección")
-print("   ESPACIO - Forzar voz (si hay seña detectada)")
+print("   ENTER - Activar/Desactivar deteccion")
+print("   ESPACIO - Forzar voz (si hay sena detectada)")
 print("   Q - Salir del programa")
 print("=" * 50)
-print("[INFO] Presiona ENTER para comenzar la detección...")
-print(f"[CONFIG] Configuración de precisión:")
-print(f"   - Confianza mínima: {CONFIDENCE_THRESHOLD*100:.0f}%")
+print("[INFO] Presiona ENTER para comenzar la deteccion...")
+print(f"[CONFIG] Configuracion de precision:")
+print(f"   - Confianza minima: {CONFIDENCE_THRESHOLD*100:.0f}%")
 print(f"   - Estabilidad requerida: {MIN_STABLE_FRAMES} frames")
 print(f"   - Cooldown entre detecciones: {PROCESSING_COOLDOWN}s")
-print(f"   - Historial mínimo: {MIN_PREDICTION_HISTORY} predicciones")
+print(f"   - Historial minimo: {MIN_PREDICTION_HISTORY} predicciones")
 while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
@@ -196,7 +196,7 @@ while cap.isOpened():
     elif processing_blocked and (current_time - last_detection_time) >= PROCESSING_COOLDOWN:
         # Terminar cooldown
         processing_blocked = False
-        print(f"[SISTEMA] Cooldown terminado - Listo para nueva detección")
+        print(f"[SISTEMA] Cooldown terminado - Listo para nueva deteccion")
     
     # Cuando hay suficientes frames Y la detección está activa Y no hay cooldown
     if detection_active and len(sequence) == SEQ_LEN and not processing_blocked:
@@ -279,7 +279,7 @@ while cap.isOpened():
                         stable_count = 0
                         current_stable_sign = None
                         
-                        print(f"Iniciando cooldown de {PROCESSING_COOLDOWN}s para mayor precisión")
+                        print(f"Iniciando cooldown de {PROCESSING_COOLDOWN}s para mayor precision")
                     
             else:
                 # Confianza baja - resetear contador e incrementar frames sin detección
@@ -287,14 +287,14 @@ while cap.isOpened():
                 current_stable_sign = None
                 frames_without_detection += 1
                 
-                # === SEÑAL DÉBIL - AREA MEDIA ===
-                cv2.putText(frame, f'SEÑAL DÉBIL', (20, 140), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,165,255), 2)
+                # === SENAL DEBIL - AREA MEDIA ===
+                cv2.putText(frame, f'SENAL DEBIL', (20, 140), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,165,255), 2)
                 cv2.putText(frame, f'Confianza: {confidence_level:.1%}', (20, 165), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,165,255), 2)
         else:
             # Índice inválido - tratar como no reconocida
             frames_without_detection += 1
             cv2.putText(frame, f'NO RECONOCIDA', (20, 180), cv2.FONT_HERSHEY_SIMPLEX, 1.1, (0,0,255), 3)
-            print(f"[ADVERTENCIA] El modelo predijo el índice {idx} pero solo hay {len(sign_labels)} señas")
+            print(f"[ADVERTENCIA] El modelo predijo el indice {idx} pero solo hay {len(sign_labels)} senas")
     
     # === MANEJO DE ESTADOS DE DETECCIÓN ===
     elif detection_active and len(sequence) == SEQ_LEN:
@@ -302,7 +302,7 @@ while cap.isOpened():
         frames_without_detection += 1
         if frames_without_detection > MAX_FRAMES_WITHOUT_DETECTION:
             cv2.putText(frame, f'NO RECONOCIDA', (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,0,255), 2)
-            cv2.putText(frame, f'Sin señas: {frames_without_detection//30}s', (20, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,255), 2)
+            cv2.putText(frame, f'Sin senas: {frames_without_detection//30}s', (20, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,255), 2)
         else:
             cv2.putText(frame, f'DETECTANDO...', (20, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255,165,0), 2)
     
@@ -319,10 +319,10 @@ while cap.isOpened():
     # === INFORMACIÓN INFERIOR - BIEN SEPARADA ===
     h = frame.shape[0]  # Altura del frame
     
-    # INFORMACIÓN COMPACTA EN LA PARTE INFERIOR
-    cv2.putText(frame, f'Señas: {", ".join(sign_labels)}', (10, h - 65), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (150,150,150), 1)
+    # INFORMACION COMPACTA EN LA PARTE INFERIOR
+    cv2.putText(frame, f'Senas: {", ".join(sign_labels)}', (10, h - 65), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (150,150,150), 1)
     cv2.putText(frame, f'Config: {CONFIDENCE_THRESHOLD*100:.0f}% | {MIN_STABLE_FRAMES}f | {PROCESSING_COOLDOWN}s', (10, h - 45), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0,200,200), 1)
-    cv2.putText(frame, f'Última: {last_spoken or "Ninguna"}', (10, h - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,0), 1)
+    cv2.putText(frame, f'Ultima: {last_spoken or "Ninguna"}', (10, h - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,255,0), 1)
     cv2.putText(frame, f'ENTER=On/Off | ESPACIO=Voz | Q=Salir', (10, h - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (100,200,100), 1)
     
     # === ESTADO COMPACTO (lado derecho) ===
@@ -365,7 +365,7 @@ while cap.isOpened():
             last_spoken = current_stable_sign
             last_speak_time = time.time()
         else:
-            print("[ADVERTENCIA] No hay seña estable para reproducir o detección inactiva")
+            print("[ADVERTENCIA] No hay sena estable para reproducir o deteccion inactiva")
 
 cap.release()
 cv2.destroyAllWindows()
