@@ -1,24 +1,28 @@
 {
-  "num_classes": 10,
-  "total_sequences": 381,
+  "num_classes": 14,
+  "total_sequences": 530,
   "test_accuracy": 1.0,
-  "test_loss": 3.282071475041448e-06,
+  "test_loss": 1.7289974493905902e-05,
   "signs": {
     "0": "adios",
     "1": "bien_hecho",
     "2": "como_estas",
-    "3": "escuela",
-    "4": "hola",
-    "5": "numero",
-    "6": "para_que",
-    "7": "parque",
-    "8": "pasear",
-    "9": "salud"
+    "3": "el",
+    "4": "emergencia",
+    "5": "enamorado",
+    "6": "encontrarse",
+    "7": "escuela",
+    "8": "hola",
+    "9": "numero",
+    "10": "para_que",
+    "11": "parque",
+    "12": "pasear",
+    "13": "salud"
   },
   "model_params": {
     "target_frames": 30,
     "n_features": 63,
-    "epochs_trained": 97,
+    "epochs_trained": 68,
     "batch_size": 16
   }
 }
