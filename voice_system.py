@@ -1,111 +1,81 @@
-# Sistema de voz alternativo para detección de señas
-import os
+# Sistema de voz OFFLINE para detección de señas
 import time
-import tempfile
 import threading
-from gtts import gTTS
-import pygame
+import pyttsx3
 
 class VoiceSystem:
-    """Sistema de voz robusto con múltiples opciones"""
+    """Sistema de voz offline usando pyttsx3"""
     
     def __init__(self):
-        self.audio_files = {}  # Cache de archivos de audio
         self.last_spoken = None
         self.last_speak_time = 0
         self.is_speaking = False
         
-        # Inicializar pygame mixer
-        pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
-        
-        # Pre-generar archivos de audio para las palabras comunes
-        self.preload_words()
+        # Inicializar motor de voz offline
+        try:
+            self.engine = pyttsx3.init()
+            
+            # Configurar propiedades de la voz
+            self.engine.setProperty('rate', 150)  # Velocidad de habla
+            self.engine.setProperty('volume', 1.0)  # Volumen máximo
+            
+            # Intentar configurar voz en español
+            voices = self.engine.getProperty('voices')
+            spanish_voice = None
+            for voice in voices:
+                if 'spanish' in voice.name.lower() or 'español' in voice.name.lower():
+                    spanish_voice = voice.id
+                    break
+            
+            if spanish_voice:
+                self.engine.setProperty('voice', spanish_voice)
+                print("[VOZ] Motor de voz en español configurado")
+            else:
+                print("[VOZ] Usando voz predeterminada del sistema")
+            
+            print("[VOZ] Sistema de voz OFFLINE inicializado correctamente")
+            self.preload_words()
+            
+        except Exception as e:
+            print(f"[ERROR] Error inicializando motor de voz: {e}")
+            self.engine = None
         
     def preload_words(self):
-        """Pre-genera archivos de audio cargando desde signs.json"""
+        """Cargar palabras desde signs.json"""
         import json
         import os
         
-        # Cargar palabras desde signs.json si existe
         words = []
         if os.path.exists('signs.json'):
             try:
                 with open('signs.json', 'r', encoding='utf-8') as f:
                     signs_data = json.load(f)
                     words = list(signs_data.values())
-                print(f"[VOZ] Cargadas {len(words)} palabras desde signs.json: {', '.join(words)}")
+                print(f"[VOZ] Cargadas {len(words)} palabras: {', '.join(words)}")
             except Exception as e:
                 print(f"[ERROR] Error leyendo signs.json: {e}")
-                words = ["hola", "adios", "como_estas", "mal", "como", "cuanto", "sientes"]
-        else:
-            # Palabras por defecto si no existe signs.json
-            words = ["hola", "adios", "como_estas", "mal", "como", "cuanto", "sientes"]
-            print("[VOZ] Usando palabras por defecto (signs.json no encontrado)")
         
-        print("[VOZ] Pre-cargando archivos de voz...")
-        for word in words:
-            try:
-                self.generate_audio_file(word)
-                print(f"[VOZ] Audio generado para: {word}")
-            except Exception as e:
-                print(f"[ERROR] Error generando audio para {word}: {e}")
-        print("[VOZ] Pre-carga de audio completada")
-    
-    def generate_audio_file(self, text):
-        """Genera un archivo de audio para el texto dado"""
-        if text in self.audio_files:
-            return self.audio_files[text]
-        
-        try:
-            # Crear archivo temporal
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
-            temp_path = temp_file.name
-            temp_file.close()
-            
-            # Generar audio con gTTS
-            tts = gTTS(text=text, lang='es', slow=False)
-            tts.save(temp_path)
-            
-            # Guardar en cache
-            self.audio_files[text] = temp_path
-            return temp_path
-            
-        except Exception as e:
-            print(f"[ERROR] Error generando audio para '{text}': {e}")
-            return None
+        print("[VOZ] Sistema listo para sintetizar voz")
     
     def speak_sync(self, text):
-        """Habla de forma síncrona, generando audio dinámicamente si es necesario"""
-        if self.is_speaking:
+        """Habla de forma síncrona usando pyttsx3"""
+        if self.is_speaking or not self.engine:
             return False
         
         try:
             self.is_speaking = True
             
-            # Obtener archivo de audio (generar dinámicamente si no existe)
-            audio_file = self.audio_files.get(text)
-            if not audio_file:
-                print(f"[VOZ] Generando audio dinámicamente para: '{text}'")
-                audio_file = self.generate_audio_file(text)
-                if audio_file:
-                    print(f"[VOZ] Audio generado exitosamente para: '{text}'")
+            # Limpiar el texto para mejor pronunciación
+            clean_text = text.replace("_", " ")
             
-            if audio_file and os.path.exists(audio_file):
-                print(f"[VOZ] Reproduciendo: {text}")
-                
-                # Reproducir con pygame
-                pygame.mixer.music.load(audio_file)
-                pygame.mixer.music.play()
-                
-                # Esperar a que termine la reproducción
-                while pygame.mixer.music.get_busy():
-                    time.sleep(0.1)
-                
-                print(f"[VOZ] Completado: {text}")
-                return True
-            else:
-                print(f"[ERROR] No se pudo generar audio para: {text}")
-                return False
+            print(f"[VOZ] Reproduciendo: {clean_text}")
+            
+            # Reproducir con pyttsx3
+            self.engine.say(clean_text)
+            self.engine.runAndWait()
+            
+            print(f"[VOZ] Completado: {clean_text}")
+            return True
                 
         except Exception as e:
             print(f"[ERROR] Error reproduciendo '{text}': {e}")
@@ -144,7 +114,7 @@ class VoiceSystem:
         return False
     
     def reload_signs(self):
-        """Recarga las señas desde signs.json y pre-genera audio si es necesario"""
+        """Recarga las señas desde signs.json"""
         import json
         import os
         
@@ -153,12 +123,6 @@ class VoiceSystem:
                 with open('signs.json', 'r', encoding='utf-8') as f:
                     signs_data = json.load(f)
                     new_words = list(signs_data.values())
-                
-                # Generar audio para palabras nuevas que no estén en cache
-                for word in new_words:
-                    if word not in self.audio_files:
-                        print(f"[VOZ] Nueva palabra detectada: '{word}' - Generando audio...")
-                        self.generate_audio_file(word)
                         
                 print(f"[VOZ] Sistema actualizado con {len(new_words)} palabras")
                 return True
@@ -168,18 +132,16 @@ class VoiceSystem:
         return False
     
     def cleanup(self):
-        """Limpia recursos y archivos temporales"""
-        pygame.mixer.quit()
-        for audio_file in self.audio_files.values():
+        """Limpia recursos del motor de voz"""
+        if self.engine:
             try:
-                if os.path.exists(audio_file):
-                    os.unlink(audio_file)
+                self.engine.stop()
             except:
                 pass
 
 # Función de prueba
 if __name__ == "__main__":
-    print("[TEST] Probando sistema de voz alternativo...")
+    print("[TEST] Probando sistema de voz offline...")
     
     voice_system = VoiceSystem()
     
