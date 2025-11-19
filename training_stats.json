@@ -1,21 +1,22 @@
 {
-  "num_classes": 7,
-  "total_sequences": 280,
-  "test_accuracy": 0.8928571343421936,
-  "test_loss": 0.4415178894996643,
+  "num_classes": 8,
+  "total_sequences": 301,
+  "test_accuracy": 1.0,
+  "test_loss": 5.72586657199281e-07,
   "signs": {
     "0": "adios",
     "1": "bien_hecho",
     "2": "como_estas",
-    "3": "hola",
-    "4": "para_que",
-    "5": "parque",
-    "6": "salud"
+    "3": "escuela",
+    "4": "hola",
+    "5": "para_que",
+    "6": "parque",
+    "7": "salud"
   },
   "model_params": {
     "target_frames": 30,
     "n_features": 63,
-    "epochs_trained": 39,
+    "epochs_trained": 100,
     "batch_size": 16
   }
 }
