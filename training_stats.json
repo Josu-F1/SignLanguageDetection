@@ -1,17 +1,19 @@
 {
-  "num_classes": 8,
-  "total_sequences": 301,
+  "num_classes": 10,
+  "total_sequences": 381,
   "test_accuracy": 1.0,
-  "test_loss": 5.72586657199281e-07,
+  "test_loss": 1.9199655071133748e-05,
   "signs": {
     "0": "adios",
     "1": "bien_hecho",
     "2": "como_estas",
     "3": "escuela",
     "4": "hola",
-    "5": "para_que",
-    "6": "parque",
-    "7": "salud"
+    "5": "numero",
+    "6": "para_que",
+    "7": "parque",
+    "8": "pasear",
+    "9": "salud"
   },
   "model_params": {
     "target_frames": 30,
