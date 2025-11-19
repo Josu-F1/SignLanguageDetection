@@ -2,7 +2,7 @@
   "num_classes": 10,
   "total_sequences": 381,
   "test_accuracy": 1.0,
-  "test_loss": 1.9199655071133748e-05,
+  "test_loss": 3.282071475041448e-06,
   "signs": {
     "0": "adios",
     "1": "bien_hecho",
@@ -18,7 +18,7 @@
   "model_params": {
     "target_frames": 30,
     "n_features": 63,
-    "epochs_trained": 100,
+    "epochs_trained": 97,
     "batch_size": 16
   }
 }

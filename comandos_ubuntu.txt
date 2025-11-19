@@ -1,0 +1,137 @@
+====================================================================
+COMANDOS PARA INSTALAR EN UBUNTU 22.04
+Sistema de Detección de Lenguaje de Señas
+====================================================================
+
+====================================================================
+OPCIÓN 1: USAR EL SCRIPT AUTOMÁTICO (install_ubuntu.sh)
+====================================================================
+
+--- PASO 1: DAR PERMISOS DE EJECUCIÓN AL SCRIPT ---
+chmod +x install_ubuntu.sh
+
+
+--- PASO 2: EJECUTAR EL SCRIPT ---
+./install_ubuntu.sh
+
+
+--- O EJECUTAR CON BASH ---
+bash install_ubuntu.sh
+
+
+====================================================================
+OPCIÓN 2: INSTALACIÓN MANUAL (PASO A PASO)
+====================================================================
+
+--- PASO 1: ACTUALIZAR SISTEMA ---
+sudo apt update
+sudo apt upgrade -y
+
+
+--- PASO 2: INSTALAR PYTHON 3.11 ---
+sudo apt install -y software-properties-common
+sudo add-apt-repository -y ppa:deadsnakes/ppa
+sudo apt update
+sudo apt install -y python3.11 python3.11-venv python3.11-dev python3-pip
+
+
+--- PASO 3: INSTALAR DEPENDENCIAS DEL SISTEMA ---
+sudo apt install -y libopencv-dev python3-opencv libportaudio2 portaudio19-dev espeak libespeak-dev ffmpeg libsm6 libxext6 libxrender-dev libgomp1
+
+
+--- PASO 4: CREAR ENTORNO VIRTUAL (RECOMENDADO) ---
+python3.11 -m venv venv
+source venv/bin/activate
+
+
+--- PASO 5: ACTUALIZAR PIP ---
+python3.11 -m pip install --upgrade pip
+
+
+--- PASO 6: INSTALAR LIBRERÍAS DE PYTHON ---
+python3.11 -m pip install opencv-python==4.10.0.84
+python3.11 -m pip install mediapipe==0.10.21
+python3.11 -m pip install numpy==1.26.4
+python3.11 -m pip install tensorflow==2.18.0
+python3.11 -m pip install scikit-learn==1.6.0
+python3.11 -m pip install pyttsx3==2.98
+python3.11 -m pip install gtts==2.5.4
+python3.11 -m pip install pygame==2.6.1
+
+
+--- O INSTALAR TODAS DE UNA VEZ ---
+python3.11 -m pip install opencv-python==4.10.0.84 mediapipe==0.10.21 numpy==1.26.4 tensorflow==2.18.0 scikit-learn==1.6.0 pyttsx3==2.98 gtts==2.5.4 pygame==2.6.1
+
+
+--- PASO 7: VERIFICAR INSTALACIÓN ---
+python3.11 -m pip list | grep -E "(opencv|mediapipe|numpy|tensorflow|scikit|pyttsx3|gtts|pygame)"
+
+
+====================================================================
+COMANDOS PARA USAR EL PROGRAMA
+====================================================================
+
+--- ACTIVAR ENTORNO VIRTUAL (si lo creaste) ---
+source venv/bin/activate
+
+
+--- EJECUTAR DETECCIÓN DE SEÑAS ---
+python3.11 detect_signs.py
+
+
+--- RECOLECTAR DATOS PARA ENTRENAR ---
+python3.11 collect_data.py
+
+
+--- ENTRENAR EL MODELO ---
+python3.11 train_model.py
+
+
+--- DESACTIVAR ENTORNO VIRTUAL ---
+deactivate
+
+
+====================================================================
+SOLUCIÓN DE PROBLEMAS COMUNES
+====================================================================
+
+--- SI HAY ERROR CON OPENCV ---
+sudo apt install -y python3-opencv libopencv-dev
+
+
+--- SI HAY ERROR CON AUDIO/VOZ ---
+sudo apt install -y espeak libespeak-dev portaudio19-dev
+python3.11 -m pip install --upgrade pyttsx3
+
+
+--- SI HAY ERROR CON PYGAME ---
+sudo apt install -y libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
+python3.11 -m pip install --upgrade pygame
+
+
+--- SI HAY ERROR CON TENSORFLOW ---
+python3.11 -m pip install --upgrade tensorflow
+
+
+--- VER LOGS DE ERRORES ---
+python3.11 detect_signs.py 2>&1 | tee error_log.txt
+
+
+====================================================================
+NOTAS IMPORTANTES
+====================================================================
+
+1. Asegúrate de tener conexión a internet para instalar las librerías
+
+2. El sistema necesita una cámara web conectada
+
+3. Para voz OFFLINE: usa pyttsx3 (ya instalado)
+   Para voz ONLINE: usa gtts (requiere internet, ya instalado)
+
+4. El modelo entrenado (sign_language_model.h5) debe estar en el mismo directorio
+
+5. Los datos de entrenamiento deben estar en la carpeta 'data/'
+
+6. Configuración de precisión actual: 65% (ajustable en detect_signs.py)
+
+====================================================================
