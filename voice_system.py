@@ -5,11 +5,12 @@ import tempfile
 import threading
 from gtts import gTTS
 import pygame
+import json # Asegurarse de que json esté importado aquí
 
 class VoiceSystem:
     """Sistema de voz usando Google TTS (gTTS) y pygame"""
     
-    def __init__(self):
+    def _init_(self):
         self.last_spoken = None
         self.last_speak_time = 0
         self.is_speaking = False
@@ -25,7 +26,7 @@ class VoiceSystem:
         
     def preload_words(self):
         """Pre-genera archivos de audio para las palabras en signs.json"""
-        import json
+        # Ya no necesitamos importar json aquí si está arriba
         
         words = []
         if os.path.exists('signs.json'):
@@ -41,7 +42,7 @@ class VoiceSystem:
         
         for word in words:
             try:
-                # Generar audio
+                # Generar audio con el texto limpio
                 clean_word = word.replace("_", " ")
                 tts = gTTS(text=clean_word, lang='es', slow=False)
                 
@@ -50,7 +51,7 @@ class VoiceSystem:
                 temp_file.close()
                 tts.save(temp_file.name)
                 
-                # Guardar en cache
+                # Guardar en cache, usando la clave original (con guion bajo)
                 self.audio_cache[word] = temp_file.name
                 
             except Exception as e:
@@ -59,19 +60,21 @@ class VoiceSystem:
         print(f"[VOZ] Audio pre-generado: {len(self.audio_cache)} archivos listos")
     
     def speak_sync(self, text):
-        """Habla de forma sincrona"""
+        """Habla de forma sincrona. 'text' puede contener guiones bajos."""
         if self.is_speaking:
             return False
         
         try:
             self.is_speaking = True
             
-            # Verificar si ya existe en cache
+            # 🔑 LIMPIEZA CLAVE 1: Obtener la versión limpia para TTS y logs
+            clean_text = text.replace("_", " ")
+            
+            # Verificar si ya existe en cache (usa la clave original con guion bajo)
             if text in self.audio_cache:
                 audio_file = self.audio_cache[text]
             else:
-                # Generar nuevo audio
-                clean_text = text.replace("_", " ")
+                # Generar nuevo audio usando el texto limpio
                 tts = gTTS(text=clean_text, lang='es', slow=False)
                 
                 temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.mp3')
@@ -82,7 +85,7 @@ class VoiceSystem:
                 self.audio_cache[text] = audio_file
             
             # Reproducir audio
-            print(f"[VOZ] Reproduciendo: {text}")
+            print(f"[VOZ] Reproduciendo: {clean_text}")
             pygame.mixer.music.load(audio_file)
             pygame.mixer.music.play()
             
@@ -90,7 +93,7 @@ class VoiceSystem:
             while pygame.mixer.music.get_busy():
                 time.sleep(0.1)
             
-            print(f"[VOZ] Completado: {text}")
+            print(f"[VOZ] Completado: {clean_text}")
             return True
                 
         except Exception as e:
@@ -112,14 +115,21 @@ class VoiceSystem:
         """Verifica si puede hablar basado en tiempo y palabra anterior"""
         current_time = time.time()
         
-        if text != self.last_spoken or (current_time - self.last_speak_time) > min_interval:
+        # 🔑 LIMPIEZA CLAVE 2: Limpiar para la lógica de comparación
+        clean_text = text.replace("_", " ")
+        
+        if clean_text != self.last_spoken or (current_time - self.last_speak_time) > min_interval:
             return True
         return False
     
     def speak_if_ready(self, text, min_interval=3, async_mode=False):
         """Habla solo si es apropiado hacerlo"""
+        
+        # 🔑 LIMPIEZA CLAVE 3: Limpiar para el almacenamiento de última palabra
+        clean_text = text.replace("_", " ")
+        
         if self.can_speak(text, min_interval) and not self.is_speaking:
-            self.last_spoken = text
+            self.last_spoken = clean_text # <--- ALMACENAR LA VERSIÓN LIMPIA
             self.last_speak_time = time.time()
             
             if async_mode:
@@ -131,7 +141,6 @@ class VoiceSystem:
     
     def reload_signs(self):
         """Recarga las senas desde signs.json y regenera audios"""
-        import json
         
         if os.path.exists('signs.json'):
             try:
@@ -143,6 +152,7 @@ class VoiceSystem:
                 for word in new_words:
                     if word not in self.audio_cache:
                         try:
+                            # Generar audio con el texto limpio
                             clean_word = word.replace("_", " ")
                             tts = gTTS(text=clean_word, lang='es', slow=False)
                             
@@ -178,13 +188,13 @@ class VoiceSystem:
                 pass
 
 # Funcion de prueba
-if __name__ == "__main__":
+if _name_ == "_main_":
     print("[TEST] Probando sistema de voz online...")
     
-    voice_system = VoiceSystem()
+    # Simular una sena con guion bajo
+    test_words = ["hola", "como_estas", "adios", "mal"] 
     
-    # Probar palabras
-    test_words = ["hola", "adios", "como estas", "mal"]
+    voice_system = VoiceSystem()
     
     for word in test_words:
         print(f"\n[TEST] Probando: {word}")
@@ -194,6 +204,13 @@ if __name__ == "__main__":
         else:
             print(f"[ERROR] {word} - ERROR")
         time.sleep(1)
+        
+    # Prueba de repetición (debería hablar solo la primera vez)
+    print("\n[TEST] Probando repetición rápida (solo debe hablar una vez)")
+    voice_system.speak_if_ready("como_estas", min_interval=5, async_mode=False)
+    voice_system.speak_if_ready("como_estas", min_interval=5, async_mode=False) # No debería hablar
+    time.sleep(6)
+    voice_system.speak_if_ready("como_estas", min_interval=5, async_mode=False) # Debería hablar ahora
     
     voice_system.cleanup()
     print("\n[TEST] Prueba completada")
