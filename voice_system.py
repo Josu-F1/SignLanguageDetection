@@ -10,7 +10,7 @@ import json # Asegurarse de que json esté importado aquí
 class VoiceSystem:
     """Sistema de voz usando Google TTS (gTTS) y pygame"""
     
-    def _init_(self):
+    def __init__(self):
         self.last_spoken = None
         self.last_speak_time = 0
         self.is_speaking = False
@@ -188,7 +188,7 @@ class VoiceSystem:
                 pass
 
 # Funcion de prueba
-if _name_ == "_main_":
+if __name__ == "__main__":
     print("[TEST] Probando sistema de voz online...")
     
     # Simular una sena con guion bajo
